@@ -78,4 +78,4 @@ df['BuyYesrs<3']=[1 if dfName.__contains__("g1") else 0]
 df['BuyYesrs_3_5']=[1 if dfName.__contains__("g2") else 0]
 df['BuyYesrs_6_10']=[1 if dfName.__contains__("g3") else 0]
 df['BuyYesrs>10']=[1 if dfName.__contains__("g4") else 0]
-df.to_csv('Data_washed.csv',sep=',')
+df.to_csv('Data_washed.csv',sep=',',index=None)
