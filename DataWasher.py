@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
 
-dfName='Data_binjiang_g1.csv'
+dfName='Data_binjiang_g2.csv'
 df = pd.read_csv(dfName)
-
+del df['Address']
 
 col=['Address','Rooms', 'Area', 'Towards', 'Floor', 'Decorate','Feature', 'TotalPrice', 'Price']
 
-del df['Address']
+
 
 #df['Rooms']=[1 if "1室" in df['Rooms']]
 
@@ -71,11 +71,31 @@ df['subway']=df['subway'].apply(lambda x:contain(x,"米"))
 df['FiveYear']=df['FiveYear'].apply(lambda x:contain(x,"满五"))
 df['hasLift']=df['hasLift'].apply(lambda x:contain(x,"电梯"))
 #df['Area']=[df['Area'].str.extract(r'(\d)')]
+
+print(dfName.__contains__("g1"))
+if dfName.__contains__("g1"):
+    df['BuyYesrs<3']=np.array(1).astype(np.int)
+    df['BuyYesrs_3_5']=np.array(0).astype(np.int)
+    df['BuyYesrs_6_10']=np.array(0).astype(np.int)
+    df['BuyYesrs>10']=np.array(0).astype(np.int)
+elif  dfName.__contains__("g2"):
+    df['BuyYesrs<3']=np.array(0).astype(np.int)
+    df['BuyYesrs_3_5']=np.array(1).astype(np.int)
+    df['BuyYesrs_6_10']=np.array(0).astype(np.int)
+    df['BuyYesrs>10']=np.array(0).astype(np.int)
+elif  dfName.__contains__("g3"):
+    df['BuyYesrs<3']=np.array(0).astype(np.int)
+    df['BuyYesrs_3_5']=np.array(0).astype(np.int)
+    df['BuyYesrs_6_10']=np.array(1).astype(np.int)
+    df['BuyYesrs>10']=np.array(0).astype(np.int)
+elif  dfName.__contains__("g4"):
+    df['BuyYesrs<3']=np.array(0).astype(np.int)
+    df['BuyYesrs_3_5']=np.array(0).astype(np.int)
+    df['BuyYesrs_6_10']=np.array(0).astype(np.int)
+    df['BuyYesrs>10']=np.array(1).astype(np.int)
+# df['BuyYesrs<3']=[1 if dfName.__contains__("g1") else 0]
+# df['BuyYesrs_3_5']=[1 if dfName.__contains__("g2") else 0]
+# df['BuyYesrs_6_10']=[1 if dfName.__contains__("g3") else 0]
+# df['BuyYesrs>10']=[1 if dfName.__contains__("g4") else 0]
 print(df.head(15))
-
-
-df['BuyYesrs<3']=[1 if dfName.__contains__("g1") else 0]
-df['BuyYesrs_3_5']=[1 if dfName.__contains__("g2") else 0]
-df['BuyYesrs_6_10']=[1 if dfName.__contains__("g3") else 0]
-df['BuyYesrs>10']=[1 if dfName.__contains__("g4") else 0]
-df.to_csv('Data_washed.csv',sep=',',index=None)
+df.to_csv('Data_washed_'+dfName.split('_')[2],sep=',',index=None)
