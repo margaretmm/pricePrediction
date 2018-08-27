@@ -1,26 +1,20 @@
 import numpy as np
 import pandas as pd
+import re
 
-dfName='Data_binjiang_g2.csv'
-df = pd.read_csv(dfName)
+
+dfName='Data_binjiang_g4.csv'
+df = pd.read_csv(dfName, sep=',')
+pd.set_option('max_colwidth',100)
+pd.set_option('display.max_columns', None)
+# if df.empty():
+#     print("read_csv from " +dfName+" have no data!!!")
+#     exit(1)
+
 del df['Address']
-
 col=['Address','Rooms', 'Area', 'Towards', 'Floor', 'Decorate','Feature', 'TotalPrice', 'Price']
+df=df.fillna(0)
 
-
-
-#df['Rooms']=[1 if "1室" in df['Rooms']]
-
-df.fillna(0,inplace=True)
-
-
-# a = df['Feature'].str.split('_',3,expand=True)#, .apply(pd.Series))
-# print(a)
-
-#df2=pd.DataFrame([df['Feature'].str.split('_',expand=True)])
-# newDF=df['Feature'].str.split('_',3, expand=True)#.apply(pd.value_counts).fillna(0).astype(str).reset_index()
-#df2.columns = ['subway', 'FiveYear','hasLift']
-#df2=pd.merge(df,newDF,on='Feature')
 def roomChange(x):
     if "1室" in x:
         return 1
@@ -40,36 +34,54 @@ def roomChange(x):
 def TowardChange(x):
     if x.contains("南"):
         return 1
+
 #print(df['Towards'].str.index("南")>-1)
 df['Rooms']=df['Rooms'].apply(lambda x: roomChange(x))
+df['Decorate']=np.array(df['Decorate'].str.contains("装修").astype(np.int))
+#df['Decorate']=[1 if x and "装修" in x else 0 for x in df.Decorate]
+
+#print(df.head(3))
+cols = list(df)
+cols.insert(2, cols.pop(cols.index('Decorate')))
+df = df.ix[:, cols]
+df.insert(3, 'subway', 0)
+df.insert(4, 'FiveYear', 0)
+df.insert(5, 'hasLift', 0)
+#print(df.head(3))
+
+# for x in df.Feature:
+#     print(x)
+#     print( "距离" in x)
+df['subway']=[1 if x!=0 and "距离" in x else 0 for x in df.Feature]
+df['FiveYear']=[1 if  x!=0 and "满五" in x else 0 for x in df.Feature]
+df['hasLift']=[1 if  x!=0 and "电梯" in x else 0 for x in df.Feature]
+del df["Feature"]
+
 df['Toward_s']=np.array(df['Towards'].str.contains("南")).astype(np.int)
 df['Toward_n']=np.array(df['Towards'].str.contains("北")).astype(np.int)
 df['Toward_e']=np.array(df['Towards'].str.contains("东")).astype(np.int)
 df['Toward_w']=np.array(df['Towards'].str.contains("西")).astype(np.int)
 del df['Towards']
 
-
 df['Floor_h']=np.array(df['Floor'].str.contains("高")).astype(np.int)
 df['Floor_m']=np.array(df['Floor'].str.contains("中")).astype(np.int)
 df['Floor_l']=np.array(df['Floor'].str.contains("低")).astype(np.int)
 del df['Floor']
 
-df['Decorate']=np.array(df['Decorate'].str.contains("装修").astype(np.int))
-
 #print("adfg".__contains__("x"))
-def contain(x,subStr):
-    print(x)
-    if x==0 or x=='0':
-        return 0
-    elif x.__contains__(subStr):
-        return 1
-    else:
-        return 0
 
+# def contain(x,subStr):
+#     print(x)
+#     if x==0 or x=='0':
+#         return 0
+#     elif x.__contains__(subStr):
+#         return 1
+#     else:
+#         return 0
+# df['subway']=df['subway'].apply(lambda x:contain(x,"米"))
+# df['FiveYear']=df['FiveYear'].apply(lambda x:contain(x,"满五"))
+# df['hasLift']=df['hasLift'].apply(lambda x:contain(x,"电梯"))
 
-df['subway']=df['subway'].apply(lambda x:contain(x,"米"))
-df['FiveYear']=df['FiveYear'].apply(lambda x:contain(x,"满五"))
-df['hasLift']=df['hasLift'].apply(lambda x:contain(x,"电梯"))
 #df['Area']=[df['Area'].str.extract(r'(\d)')]
 
 print(dfName.__contains__("g1"))
@@ -93,9 +105,26 @@ elif  dfName.__contains__("g4"):
     df['BuyYesrs_3_5']=np.array(0).astype(np.int)
     df['BuyYesrs_6_10']=np.array(0).astype(np.int)
     df['BuyYesrs>10']=np.array(1).astype(np.int)
-# df['BuyYesrs<3']=[1 if dfName.__contains__("g1") else 0]
-# df['BuyYesrs_3_5']=[1 if dfName.__contains__("g2") else 0]
-# df['BuyYesrs_6_10']=[1 if dfName.__contains__("g3") else 0]
-# df['BuyYesrs>10']=[1 if dfName.__contains__("g4") else 0]
-print(df.head(15))
+#print(df.head(15))
+
+# for x in df.Price:
+#     print(x)
+#     a=re.findall(r"^(\d+)", x)
+#     print(a[0], type(a))
+
+df['Price']=[re.findall(r"^(\d+)", x)[0] if u"元/㎡" in x else 0 for x in df.Price]
+df['Price'] = df['Price'].astype(np.float64)
+df = df[(df['Price']>5000) &(df['Price']<80000)]
+
+df['TotalPrice']=[re.findall(r"^(\d+)", x)[0] if u"万元" in x else 0 for x in df.TotalPrice]
+df['TotalPrice'] = df['TotalPrice'].astype(np.float32)
+df = df[(df['TotalPrice']>60) &(df['TotalPrice']<1800)]
+
+df['Area']=[re.findall(r"^(\d+)", x)[0] if u"㎡" in x else 0 for x in df.Area]
+df['Area'] = df['Area'].astype(np.float32)
+df.drop_duplicates()
+
+df['ProductHouse']=np.array(df['Area']>50).astype(np.int)
+
+
 df.to_csv('Data_washed_'+dfName.split('_')[2],sep=',',index=None)
