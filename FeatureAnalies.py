@@ -41,9 +41,8 @@ def encode(frame, feature):
         frame.loc[frame[feature] == attr_v, feature+'_E'] = score
 
 dfName='Data_washed_g1.csv'
-df_ori = pd.read_csv(dfName,header=0)
-df=df_ori[df_ori['Area']>50]# filter non normal house
-df_train=df[["Rooms","Area","Decorate","subway","FiveYear","hasLift","Toward_s","Toward_n","Toward_e","Toward_w","Floor_h","Floor_m","Floor_l","BuyYesrs<3","BuyYesrs_3_5","BuyYesrs_6_10","BuyYesrs>10"]]
+df = pd.read_csv(dfName,header=0)
+df_train=df[["Rooms","Area","Decorate","subway","FiveYear","hasLift","Toward_s","Toward_n","Toward_e","Toward_w","Floor_h","Floor_m","Floor_l","BuyYesrs<3","BuyYesrs_3_5","BuyYesrs_6_10","BuyYesrs>10","ProductHouse"]]
 df_target=df["Price"].values.reshape(len(df),1)
 # print(np.shape(df_train))
 # print(np.shape(df_target))
