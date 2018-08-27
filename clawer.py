@@ -58,7 +58,7 @@ def main():
                     for div in lstDiv:
                         print(div)
                         writer.writerow(div)
-                        time.sleep(3)#设置爬取频率，一开始我就是爬取的太猛，导致网页需要验证。
+                    time.sleep(3)#设置爬取频率，一开始我就是爬取的太猛，导致网页需要验证。
 
 if __name__=='__main__':
     main()
