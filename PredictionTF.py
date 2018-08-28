@@ -1,7 +1,30 @@
+# coding: utf-8
 import tensorflow as tf
-import numpy as np
-import pandas as pd
+from sklearn.datasets import load_boston
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import scale
+from sklearn.model_selection import train_test_split
+import pandas as pd
+
+# boston = load_boston()
+# X = scale(boston.data)
+# y = scale(boston.target.reshape((-1,1)))
+#len=len(boston.data)
+# X_train,X_test,y_train,y_test = train_test_split(boston.data,boston.target,test_size=0.1,random_state=0)
+
+dfTrain='Data_washed_all2.csv'
+keep_prob=1
+df = pd.read_csv(dfTrain,header=0)
+arr=["Rooms","Area","Decorate","subway","FiveYear","Toward_s","Toward_e","Toward_w","Floor_h","Floor_m","Floor_l","BuyYesrs<3","BuyYesrs_3_5","BuyYesrs_6_10","BuyYesrs>10","ProductHouse"]
+len=len(arr)
+df_train=df[arr].values
+df_target=df["Price"].values#.values.reshape(len(df),1)
+X_train,X_test,y_train,y_test = train_test_split(df_train,df_target,test_size=0.1,random_state=0)
+
+X_train = scale(X_train)
+X_test = scale(X_test)
+y_train = scale(y_train.reshape((-1,1)))
+y_test = scale(y_test.reshape((-1,1)))
 
 
 def add_layer(inputs,input_size,output_size,activation_function=None):
@@ -19,81 +42,64 @@ def add_layer(inputs,input_size,output_size,activation_function=None):
         with tf.name_scope("activation_function"):
             return activation_function(Wx_plus_b)
 
-dfTrain='Data_washed_all.csv'
-dfTest='Data_washed_g2.csv'
-keep_prob=1
-df_ori = pd.read_csv(dfTrain,header=0)
-df_ori_test = pd.read_csv(dfTrain,header=0)
-df=df_ori[df_ori['Area']>50]# filter non normal house
-df_test=df_ori[df_ori_test['Area']>50]# filter non normal house
-
-arr=["Rooms","Area","Decorate","subway","FiveYear","hasLift","Toward_s","Toward_n","Toward_e","Toward_w","Floor_h","Floor_m","Floor_l"]
-df_train=scale(df[arr])
-df_train_test=scale(df_test[arr])
-
-
-#df["Price"]=df["Price"].apply(lambda x:normalize(x))
-df_target=scale(df["Price"].values.reshape(len(df),1))
-df_target_test=scale(df_test["Price"].values.reshape(len(df_test),1))
-print(np.shape(df_train))
-print(np.shape(df_target))
-#print("~~~~")
-#print(np.random.permutation(len(df_target)))
-
-len=len(arr)
-X=tf.placeholder("float",shape=[None,len])
-Y=tf.placeholder("float",shape=[None,1])
-# Weight=tf.Variable(tf.random_normal([len,1]))
-# Bias=tf.Variable(tf.random_normal([1]))
+xs = tf.placeholder(shape=[None,X_train.shape[1]],dtype=tf.float32,name="inputs")
+ys = tf.placeholder(shape=[None,1],dtype=tf.float32,name="y_true")
 keep_prob_s = tf.placeholder(dtype=tf.float32)
 
-
 with tf.name_scope("layer_1"):
-    l1 = add_layer(X,len,1,activation_function=tf.nn.relu)
+    l1 = add_layer(xs,len,10,activation_function=tf.nn.relu)
 # with tf.name_scope("layer_2"):
 #     l2 = add_layer(l1,6,10,activation_function=tf.nn.relu)
 with tf.name_scope("y_pred"):
-    pred = add_layer(l1,1,1)
+    pred = add_layer(l1,10,1)
 
 # 这里多于的操作，是为了保存pred的操作，做恢复用。我只知道这个笨方法。
 pred = tf.add(pred,0,name='pred')
-#output=tf.matmul(X,Weight)+Bias
-#pred=tf.cast(tf.sigmoid(output)>0.5,tf.float32)
 
 with tf.name_scope("loss"):
-#loss=tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=Y,logits=output))
-    loss = tf.reduce_mean(tf.reduce_sum(tf.square(Y - pred),reduction_indices=[1]))  # mse
-#train_step=tf.train.GradientDescentOptimizer(0.0003).minimize(loss)
+    loss = tf.reduce_mean(tf.reduce_sum(tf.square(ys - pred),reduction_indices=[1]))  # mse
+    tf.summary.scalar("loss",tensor=loss)
 with tf.name_scope("train"):
-    train_step = tf.train.AdamOptimizer(learning_rate=0.0003).minimize(loss)
-#accuracy=tf.reduce_sum(tf.cast(tf.equal(pred,Y),tf.float32))
+    # train_op =tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(loss)
+    train_op = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
 
-init = tf.global_variables_initializer()
-sess = tf.Session()
-sess.run(init)
-loss_train=[]
-train_acc=[]
-test_acc=[]
+# draw pics
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+ax.plot(range(50),y_train[0:50],'b')  #展示前50个数据
+ax.set_ylim([-2,5])
+plt.ion()
+plt.show()
 
-# 训练数据
-for i in range(5000):
-    index=np.random.permutation(np.shape(df_target)[0])
-    df_train=df_train[index]
-    df_target=df_target[index]
-    for n in range(np.shape(df_target)[0]//100+1):
-        batch_xs=df_train[n*100:n*100+100]
-        batch_ys=df_target[n*100:n*100+100]
-        sess.run(train_step,feed_dict={X: batch_xs,Y:batch_ys,keep_prob_s:keep_prob})
-    if i%100==0:
-        loss_temp=sess.run(loss,feed_dict={X:batch_xs,Y:batch_ys,keep_prob_s:keep_prob})
-        loss_temp_test = sess.run(loss, feed_dict={X: df_train_test, Y: df_target_test,keep_prob_s:keep_prob})
-        print("epoch:%d\tloss:%.5f\ttest loss:%.5f" % (i, loss_temp,loss_temp_test))
+# parameters
+keep_prob=1  # 防止过拟合，取值一般在0.5到0.8。我这里是1，没有做过拟合处理
+ITER =25000  # 训练次数
 
 
-#
-# print('b:' + str(sess.run(b)) + ' || a:' + str(sess.run(a)))
+def fit(X, y, ax, n, keep_prob):
+    init = tf.global_variables_initializer()
+    feed_dict_train = {ys: y, xs: X, keep_prob_s: keep_prob}
+    with tf.Session() as sess:
+        saver = tf.train.Saver(tf.global_variables(), max_to_keep=15)
+        merged = tf.summary.merge_all()
+        writer = tf.summary.FileWriter(logdir="nn_boston_log", graph=sess.graph)  #写tensorbord
+        sess.run(init)
+        for i in range(n):
+            _loss, _ = sess.run([loss, train_op], feed_dict=feed_dict_train)
 
+            if i % 100 == 0:
+                print("epoch:%d\tloss:%.5f" % (i, _loss))
+                y_pred = sess.run(pred, feed_dict=feed_dict_train)
+                rs = sess.run(merged, feed_dict=feed_dict_train)
+                writer.add_summary(summary=rs, global_step=i)  #写tensorbord
+                saver.save(sess=sess, save_path="nn_boston_model/nn_boston.model", global_step=i) # 保存模型
+                try:
+                    ax.lines.remove(lines[0])
+                except:
+                    pass
+                lines = ax.plot(range(50), y_pred[0:50], 'r--')
+                plt.pause(1)
 
+        saver.save(sess=sess, save_path="nn_boston_model/nn_boston.model", global_step=n)  # 保存模型
 
-
-
+fit(X=X_train,y=y_train,n=ITER,keep_prob=keep_prob,ax=ax)
