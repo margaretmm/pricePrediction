@@ -42,7 +42,7 @@ def encode(frame, feature):
 
 dfName='Data_washed_g1.csv'
 df = pd.read_csv(dfName,header=0)
-df_train=df[["Rooms","Area","Decorate","subway","FiveYear","hasLift","Toward_s","Toward_n","Toward_e","Toward_w","Floor_h","Floor_m","Floor_l","BuyYesrs<3","BuyYesrs_3_5","BuyYesrs_6_10","BuyYesrs>10","ProductHouse"]]
+df_train=df[["Rooms","Area","Decorate","subway","FiveYear","hasLift","Toward_s","Toward_n","Toward_e","Toward_w","Floor_h","Floor_m","Floor_l","BuyYesrs<3","BuyYesrs_3_5","BuyYesrs_6_10","BuyYesrs>10","ProductHouse","area_bj","area_gs","area_yh","area_xh","area_xc","area_xs"]]
 df_target=df["Price"].values.reshape(len(df),1)
 # print(np.shape(df_train))
 # print(np.shape(df_target))
